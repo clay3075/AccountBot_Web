@@ -1,23 +1,11 @@
 import tkinter as tk
 
 
-def entriesExist():
-	'''Will return true if entries already exist'''
-
-def addEntry(nickname,url,name,password):
-	'''Add new website to database'''
-
-def deleteEntry(url):
-	'''Remove website from database'''
-
-def login():
-	'''Login to selected website'''
-
-
 class Window(tk.Frame):
 	'''Control UI and flow of UI components'''
 	def create_window(self, parent):
 		'''Create basic outline of window'''
+		self.entries = []
 		self.parent = parent
 		self.parent.title("AccountBot: Web")
 		self.parent.geometry("650x550+300+300")
@@ -32,19 +20,23 @@ class Window(tk.Frame):
 		'''
 		self.addB = tk.Button(self.parent, text="Add", height=30, width= 20, command=self.addButtonClicked)
 		#self.addB.grid(row=0, column=0, sticky=tk.E)
-		self.addB.place(relx=0.5, rely=0.5, anchor='center')
+		if (not self.entriesExist()):
+			self.addB.place(relx=0.5, rely=0.5, anchor='center')
 
 	def addButtonClicked(self):
 		'''Bring up window to add entry and add entry internally as well'''
 		print('clicked')
+		if (self.entriesExist()):
+			self.addB.place(relx=.8, rely=.1)
 		self.addItem()
-		self.addB.place(relx=.8, rely=.1)
 
 
 	def addItem(self):
 		'''Show text fields and get user input'''
 		#create labels
+		self.addB.place_forget()
 		self.inputBox = tk.Frame(self.parent, width=400, height=400)
+		#self.grid()
 		self.inputBox.place(relx=.5,rely=.3, anchor='center')
 		self.nicknameLabel = tk.Label(self.inputBox, text="Nickname: ")
 		self.urlLabel      = tk.Label(self.inputBox, text="URL:      ")
@@ -64,7 +56,33 @@ class Window(tk.Frame):
 		self.usernameEntry.grid(row=2, column=1)
 		self.passwordLabel.grid(row=3, sticky=tk.NW)
 		self.passwordEntry.grid(row=3, column=1)
-		
+		self.addEntry()
+
+		self.okButton = tk.Button(self.parent, text="Done", command=self.addEntry)
+		self.okButton.place(relx=.5, rely=.7)
+
+	def addEntry(self):
+		'''Add new website to database'''
+		if (self.nicknameEntry.get() and self.urlEntry.get() and self.usernameEntry.get() and self.passwordEntry.get()):
+			self.inputBox.place_forget()
+
+
+			self.okButton.place_forget()
+			self.addB.place(relx=.8, rely=.1)
+
+
+	def entriesExist(self):
+		'''Will return true if entries already exist'''
+		exists = False
+		if (len(self.entries)):
+			exists = True
+		return exists
+
+	def deleteEntry(url):
+		'''Remove website from database'''
+
+	def login():
+		'''Login to selected website'''
 
 def main():
 	ui = Window()
