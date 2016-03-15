@@ -11,8 +11,8 @@ class Window(tk.Frame):
 		self.loadTimes = 0
 		self.db = sqlite3.connect('.accounts.db')
 		self.db.execute('create table if not exists accounts (nickname TEXT, url TEXT, username TEXT, password TEXT);')
-		#self.dbcursor = self.db.cursor()
 		self.entries = []
+		self.nicknames = []
 		self.loadEntries()
 		self.parent.title("AccountBot: Web")
 		self.parent.geometry("650x550+300+300")
@@ -22,29 +22,35 @@ class Window(tk.Frame):
 		self.parent.columnconfigure('all', minsize = 200)
 
 	def reloadWindow(self):
-		self.parent.grid_forget()
+		for child in self.parent.winfo_children():
+			for child2 in child.winfo_children():
+				child2.grid_forget()
+				child2.place_forget()
+			child.grid_forget()
+			child.place_forget()
+
 		self.entries = []
 		self.loadEntries()
-		self.parent.title("AccountBot: Web")
-		self.parent.geometry("650x550+300+300")
+		#self.parent.title("AccountBot: Web")
+		#self.parent.geometry("650x550+300+300")
 		self.addButton()
 		self.deleteButton()
-		self.parent.rowconfigure('all', minsize = 200)
-		self.parent.columnconfigure('all', minsize = 200)
+		#self.parent.rowconfigure('all', minsize = 200)
+		#self.parent.columnconfigure('all', minsize = 200)
 
 	###work on
 	###
 
 	def hideEntries(self):
 
-		#self.accountButtonFrame.configure(state='disable')
-		for child in self.accountButtonFrame.winfo_children():
-			child.configure(state='disabled')
+		self.accountButtonFrame.place_forget()
+		#for child in self.accountButtonFrame.winfo_children():
+		#	child.configure(state='disabled')
 
 	def showEntries(self):
-		#self.accountButtonFrame.configure(state='enable')
-		for child in self.accountButtonFrame.winfo_children():
-			child.configure(state='active')
+		self.accountButtonFrame.place(relx=.5,rely=.5,anchor='center')
+		#for child in self.accountButtonFrame.winfo_children():
+		#	child.configure(state='active')
 
 	###
 	###
@@ -62,7 +68,7 @@ class Window(tk.Frame):
 
 	def addButtonClicked(self):
 		'''Bring up window to add entry and add entry internally as well'''
-		print('clicked')
+		self.reloadWindow()
 		if (self.entriesExist()):
 			self.addB.place(relx=.2, rely=.1, anchor='center')
 		self.addItem()
@@ -97,11 +103,13 @@ class Window(tk.Frame):
 
 		self.okButton = tk.Button(self.parent, text="Done", command=self.addEntry)
 		self.okButton.place(relx=.5, rely=.7)
+		self.cancelButton = tk.Button(self.parent, text="Cancel", command=self.reloadWindow)
+		self.cancelButton.place(relx=.4, rely=.7)
 		self.showEntries()
 
 	def addEntry(self):
 		'''Add new website to database'''
-		if (self.nicknameEntry.get() and self.urlEntry.get() and self.usernameEntry.get() and self.passwordEntry.get()):
+		if (self.nicknameEntry.get() and self.urlEntry.get() and self.usernameEntry.get() and self.passwordEntry.get() and self.nicknameUnique(self.nicknameEntry.get())):
 			self.inputBox.place_forget()
 
 			self.db.execute("INSERT INTO accounts (nickname, url, username, password) \
@@ -109,9 +117,17 @@ class Window(tk.Frame):
 			self.loadAccountButton(self.nicknameEntry.get(),self.urlEntry.get(),self.usernameEntry.get(),self.passwordEntry.get())
 
 			self.okButton.place_forget()
+			self.cancelButton.place_forget()
 			self.addB.place(relx=.2, rely=.1, anchor='center')
 			self.db.commit()
 
+	def nicknameUnique(self, nickname):
+		unique = True
+
+		for name in self.nicknames:
+			if name is nickname:
+				unique = False
+		return unique
 
 	def entriesExist(self):
 		'''Will return true if entries already exist'''
@@ -128,7 +144,7 @@ class Window(tk.Frame):
 
 	def deleteButtonClicked(self):
 		'''Remove website from database. Give menu to enter nickname to be deleted.'''
-		self.hideEntries()
+		self.reloadWindow()
 		deleteFrame = tk.Frame(self.parent, width=100, height=100)
 		deleteLabel = tk.Label(deleteFrame, text="Nickname: ")
 		deleteEntry = tk.Entry(deleteFrame)
@@ -137,16 +153,20 @@ class Window(tk.Frame):
 		self.deleteB.place_forget()
 		deleteFrame.place(relx=.5,rely=.5, anchor='center')
 		self.okButton = tk.Button(self.parent, text="Done", command=lambda: self.deleteEntryFromDB(deleteEntry.get()))
-		self.okButton.place(relx=.5, rely=.7)
-		self.showEntries()
+		self.okButton.place(relx=.5, rely=.7,)
+		self.cancelButton = tk.Button(self.parent, text="Cancel", command=self.reloadWindow)
+		self.cancelButton.place(relx=.4, rely=.7)
+		self.hideEntries()
 		pass
 
 	def deleteEntryFromDB(self, nickname):
 		print('in')
 		self.db.execute("DELETE from accounts WHERE nickname=?;",(nickname,))
 		self.db.commit()
-		self.loadTime -= 1
+		self.loadTimes -= 1
 		self.okButton.place_forget()
+		self.cancelButton.place_forget()
+		self.showEntries()
 		self.reloadWindow()
 
 	def login(self,url,username,password):
@@ -156,6 +176,7 @@ class Window(tk.Frame):
 	def loadAccountButton(self, nickname, url, username, password):
 		'''Load buttons to screen based on inputed information'''
 		self.entries.append(tk.Button(self.accountButtonFrame, text=nickname, command=self.login(url,username,password)).grid(row=self.loadTimes))
+		self.nicknames.append(nickname)
 		self.loadTimes += 1
 		self.accountButtonFrame.place(relx=.5,rely=.5,anchor='center')
 
