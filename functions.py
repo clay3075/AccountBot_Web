@@ -1,6 +1,8 @@
 import tkinter as tk
 import sqlite3
-
+from urllib.request import urlopen
+import re
+from bs4 import BeautifulSoup
 
 class Window(tk.Frame):
 	'''Control UI and flow of UI components'''
@@ -171,11 +173,14 @@ class Window(tk.Frame):
 
 	def login(self,url,username,password):
 		'''Login to selected website'''
-		pass
+		print(url + " " + username + " " + password)
+		site = urlopen('http://'+url).read()
+		soup = BeautifulSoup(site, 'html.parser')
+		print(soup.prettify())
 
 	def loadAccountButton(self, nickname, url, username, password):
 		'''Load buttons to screen based on inputed information'''
-		self.entries.append(tk.Button(self.accountButtonFrame, text=nickname, command=self.login(url,username,password)).grid(row=self.loadTimes))
+		self.entries.append(tk.Button(self.accountButtonFrame, text=nickname, command=lambda: self.login(url,username,password)).grid(row=self.loadTimes))
 		self.nicknames.append(nickname)
 		self.loadTimes += 1
 		self.accountButtonFrame.place(relx=.5,rely=.5,anchor='center')
