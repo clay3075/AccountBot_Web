@@ -1,8 +1,9 @@
 import tkinter as tk
 import sqlite3
 from urllib.request import urlopen
-import re
+import requests
 from bs4 import BeautifulSoup
+import robobrowser
 
 class Window(tk.Frame):
 	'''Control UI and flow of UI components'''
@@ -173,10 +174,62 @@ class Window(tk.Frame):
 
 	def login(self,url,username,password):
 		'''Login to selected website'''
+		loginAliasesUserName = ['username','userid','user-id','user_name','user-name','user_id', 'login', 'email', 'Email']
+		loginAliasesPassword = ['password', 'pass_word', 'passkey', 'pass_key', 'pass-word', 'passcode', 'pass_code', 'pass-key','pass-code']
+		loginAliasesLogin    = ['login','signin','sign-in','LogIn','session', 'Login', 'Session']
 		print(url + " " + username + " " + password)
-		site = urlopen('http://'+url).read()
-		soup = BeautifulSoup(site, 'html.parser')
-		print(soup.prettify())
+		with requests.session() as s:
+			site = urlopen(url).read()
+			soup = BeautifulSoup(site, 'html.parser')
+			soup.prettify()
+		user = ''
+		passw = ''
+		action   = ''
+		log      = ''
+		for name in loginAliasesUserName:
+			inputs = soup.find('input', {'name' : name})
+			if inputs:
+				user = name
+				print (user)
+				break
+		for passcode in loginAliasesPassword:
+			inputs = soup.find('input', {'name' : passcode})
+			if inputs:
+				passw = passcode
+				print (passw)
+				break
+		for login in loginAliasesLogin:
+			inputs = soup.find_all('form')
+			for input in inputs:
+				if login in input['action']:
+					action = input.get('action')
+					print(action)
+					break
+		if (not action):
+			for login in loginAliasesPassword:
+				inputs = soup.find('form', {'name' : login})
+				if inputs:
+					log = login
+					print (log)
+					break
+
+		print ('action is ' + action)
+
+		payload ={user : username, passw : password}
+
+		br = robobrowser.RoboBrowser()
+		br.open(url, verify=False)
+		if (action):
+			form = br.get_form(action=action)
+		else:
+			form = br.get_form(name=log)
+		print(form)
+		form[user] = username
+		form[passw]= password
+		br.submit_form(form)
+		print(str(br.select))
+
+
 
 	def loadAccountButton(self, nickname, url, username, password):
 		'''Load buttons to screen based on inputed information'''
