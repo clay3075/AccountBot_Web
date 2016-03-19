@@ -4,11 +4,15 @@ from urllib.request import urlopen
 import requests
 from bs4 import BeautifulSoup
 import robobrowser
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import time
 
 class Window(tk.Frame):
 	'''Control UI and flow of UI components'''
 	def create_window(self, parent):
 		'''Create basic outline of window'''
+		self.browserOption = 'chrome'
 		self.parent = parent
 		self.accountButtonFrame = tk.Frame(self.parent, width=400)
 		self.loadTimes = 0
@@ -176,7 +180,7 @@ class Window(tk.Frame):
 		'''Login to selected website'''
 		loginAliasesUserName = ['username','userid','user-id','user_name','user-name','user_id', 'login', 'email', 'Email']
 		loginAliasesPassword = ['password', 'pass_word', 'passkey', 'pass_key', 'pass-word', 'passcode', 'pass_code', 'pass-key','pass-code']
-		loginAliasesLogin    = ['login','signin','sign-in','LogIn','session', 'Login', 'Session']
+		loginAliasesLogin    = ['login','signin','sign-in','LogIn','session', 'Login', 'Session','commit', 'submit']
 		print(url + " " + username + " " + password)
 		with requests.session() as s:
 			site = urlopen(url).read()
@@ -198,7 +202,7 @@ class Window(tk.Frame):
 				passw = passcode
 				print (passw)
 				break
-		for login in loginAliasesLogin:
+		'''for login in loginAliasesLogin:
 			inputs = soup.find_all('form')
 			for input in inputs:
 				if login in input['action']:
@@ -215,8 +219,6 @@ class Window(tk.Frame):
 
 		print ('action is ' + action)
 
-		payload ={user : username, passw : password}
-
 		br = robobrowser.RoboBrowser()
 		br.open(url, verify=False)
 		if (action):
@@ -227,7 +229,29 @@ class Window(tk.Frame):
 		form[user] = username
 		form[passw]= password
 		br.submit_form(form)
-		print(str(br.select))
+		print(str(br.select))'''
+		if self.browserOption is 'firefox':
+			browser = webdriver.Firefox()
+		if self.browserOption is 'chrome':
+			browser = webdriver.Chrome()
+		browser.get(url)
+		userName = browser.find_element_by_name(user)
+		passWord = browser.find_element_by_name(passw)
+
+		userName.send_keys(username)
+		passWord.send_keys(password)
+
+		for login in loginAliasesLogin:
+			inputs = soup.find('input', {'name' : login})
+			if inputs:
+				log = login
+				print (log)
+				break
+		print('log is ' + log)
+		print (browser.find_element_by_name(log).click())
+		#browser.find_element_by_name(log).send_keys(Keys.RETURN)
+
+
 
 
 
